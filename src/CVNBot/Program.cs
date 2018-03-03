@@ -62,6 +62,8 @@ namespace CVNBot
             // User
             if (rawConfig.ContainsKey("botnick"))
                 config.botNick = rawConfig["botnick"];
+            if (rawConfig.ContainsKey("botuser"))
+                config.botUser = rawConfig["botuser"];
             if (rawConfig.ContainsKey("botpass"))
                 config.botPass = rawConfig["botpass"];
             if (rawConfig.ContainsKey("description"))
@@ -156,6 +158,8 @@ namespace CVNBot
             irc.ActiveChannelSyncing = true;
             irc.OnChannelMessage += Irc_OnChannelMessage;
             irc.OnChannelNotice += Irc_OnChannelNotice;
+            irc.OnQueryMessage += Irc_OnQueryMessage;
+            irc.OnRawMessage += Irc_OnRawMessage;
             irc.OnConnected += Irc_OnConnected;
             irc.OnError += Irc_OnError;
             irc.OnConnectionError += Irc_OnConnectionError;
@@ -173,25 +177,6 @@ namespace CVNBot
             try
             {
                 irc.Login(config.botNick, config.description + " " + version, 4, config.botNick, config.botPass);
-
-                string feedChannel = config.feedChannel;
-                string controlChannel = config.controlChannel;
-                string broadcastChannel = config.broadcastChannel;
-                if (feedChannel != "None")
-                {
-                    logger.InfoFormat("Joining feed channel: {0}", feedChannel);
-                    irc.RfcJoin(feedChannel);
-                }
-                if (controlChannel != "None")
-                {
-                    logger.InfoFormat("Joining control channel: {0}", controlChannel);
-                    irc.RfcJoin(controlChannel);
-                }
-                if (broadcastChannel != "None")
-                {
-                    logger.InfoFormat("Joining broadcast channel: {0}", broadcastChannel);
-                    irc.RfcJoin(broadcastChannel);
-                }
 
                 // Now connect the RCReader to channels
                 new Thread(new ThreadStart(rcirc.InitiateConnection)).Start();
@@ -267,6 +252,49 @@ namespace CVNBot
                 logger.Warn("Initiating restart sequence after Excess Flood");
                 Restart();
             }
+        }
+
+        /// <summary>
+        /// This event handler detects all messages
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        static void Irc_OnRawMessage(object sender, IrcEventArgs e)
+        {
+            // Only join channels after identified
+            if (e.Data.RawMessage.StartsWith(":NickServ!NickServ@services. NOTICE")
+                && e.Data.RawMessage.Contains("You are now identified for"))
+            {
+                string feedChannel = config.feedChannel;
+                string controlChannel = config.controlChannel;
+                string broadcastChannel = config.broadcastChannel;
+                if (feedChannel != "None")
+                {
+                    logger.InfoFormat("Joining feed channel: {0}", feedChannel);
+                    irc.RfcJoin(feedChannel);
+                }
+                if (controlChannel != "None")
+                {
+                    logger.InfoFormat("Joining control channel: {0}", controlChannel);
+                    irc.RfcJoin(controlChannel);
+                }
+                if (broadcastChannel != "None")
+                {
+                    logger.InfoFormat("Joining broadcast channel: {0}", broadcastChannel);
+                    irc.RfcJoin(broadcastChannel);
+                }
+            }
+        }
+
+        /// <summary>
+        /// This event handler detects private messages
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        static void Irc_OnQueryMessage(object sender, IrcEventArgs e)
+        {
+            logger.InfoFormat("Receiving query from {0}: {1}", e.Data.Nick, e.Data.Message);
+            // Maybe can be used as a console
         }
 
         /// <summary>
@@ -379,6 +407,7 @@ namespace CVNBot
         static void Irc_OnConnected(object sender, EventArgs e)
         {
             logger.InfoFormat("Connected to {0}", config.ircServerName);
+            irc.SendMessage(SendType.Message, "NickServ", "IDENTIFY " + config.botUser + " " + config.botPass);
         }
 
 

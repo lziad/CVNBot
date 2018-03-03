@@ -6,6 +6,7 @@ namespace CVNBot
          * User
          */
         public string botNick = "CVNBot";
+        public string botUser = "CVNBot";
         public string botPass = ""; // Optional
         public string description = "CVNBot Version:"; // Optional
 
