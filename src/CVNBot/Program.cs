@@ -553,7 +553,7 @@ namespace CVNBot
                         {
                             ((Project)prjlist[cmdParams[0]]).RetrieveWikiDetails();
                             logger.InfoFormat("Rejoining RCReader channel: #{0}", cmdParams[0]);
-                            rcirc.rcirc.rfcJoin('#' + cmdParams[0]);
+                            rcirc.rcirc.RfcJoin('#' + cmdParams[0]);
                             SendMessageF(SendType.Message, e.Data.Channel, "Reloaded project " + cmdParams[0], Priority.High);
                         }
                         catch (Exception ex)
