@@ -539,7 +539,7 @@ namespace CVNBot
                         SendMessageF(SendType.Message, e.Data.Channel, "Re-read messages", Priority.High);
                         break;
                     case "reload":
-                        // Reloads wiki data for a project
+                        // Reloads wiki data and rejoin rc channel for a project
                         if (!HasPrivileges('@', ref e))
                             return;
 
@@ -551,8 +551,9 @@ namespace CVNBot
 
                         try
                         {
-
                             ((Project)prjlist[cmdParams[0]]).RetrieveWikiDetails();
+                            logger.InfoFormat("Rejoining RCReader channel: #{0}", cmdParams[0]);
+                            rcirc.rcirc.rfcJoin('#' + cmdParams[0]);
                             SendMessageF(SendType.Message, e.Data.Channel, "Reloaded project " + cmdParams[0], Priority.High);
                         }
                         catch (Exception ex)
